@@ -1,0 +1,19 @@
+#!/usr/bin/env node
+if (process.argv[2] === '--setup') {
+  try { await (await import('./mcp-host.mjs')).setupHost(); }
+  catch (error) { console.error(error.message); process.exitCode = 1; }
+} else if (process.argv[2] === '--login') {
+  const { signInClaude } = await import('./open-browser.mjs');
+  const controller = new AbortController();
+  const abort = () => controller.abort(new Error('Sign-in canceled.'));
+  process.once('SIGINT', abort);
+  try {
+    const client = await signInClaude({ report: console.log, signal: controller.signal });
+    await client.close();
+    console.log('Duet sign-in saved.');
+  } catch (error) { console.error(error.message); process.exitCode = 1; }
+  finally { process.off('SIGINT', abort); }
+} else if (process.argv[2] === '--browser') {
+  try { await (await import('./open-browser.mjs')).openDuetBrowser(); }
+  catch (error) { console.error(error.message); process.exitCode = 1; }
+} else await import('./terminal.mjs');
